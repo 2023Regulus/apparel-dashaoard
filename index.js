@@ -5,6 +5,9 @@ const path = require('path');
 
 const PORT = process.env.PORT || 3000;
 
+// Webhookで受け取った最新の売上データを保持
+let latestWebhookData = null;
+
 function squareRequest(reqPath, token) {
   return new Promise((resolve, reject) => {
     const options = {
@@ -43,6 +46,39 @@ http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   const token = req.headers['authorization']?.replace('Bearer ', '') || '';
 
+  // ===== Webhook受信エンドポイント =====
+  if (url.pathname === '/webhook' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const event = JSON.parse(body);
+        console.log('Webhook received:', event.type);
+
+        if (event.type === 'payment.completed' && event.data?.object?.payment) {
+          latestWebhookData = event.data.object.payment;
+          console.log('Payment saved:', latestWebhookData.id);
+        }
+
+        res.writeHead(200);
+        res.end('OK');
+      } catch(e) {
+        console.error('Webhook parse error:', e);
+        res.writeHead(400);
+        res.end('Bad Request');
+      }
+    });
+    return;
+  }
+
+  // ===== 最新Webhookデータ取得API =====
+  if (url.pathname === '/api/latest-payment' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ payment: latestWebhookData }));
+    return;
+  }
+
+  // ===== 既存: 支払い一覧API =====
   if (url.pathname === '/api/payments') {
     if (!token) {
       res.writeHead(401);
@@ -63,7 +99,7 @@ http.createServer(async (req, res) => {
     return;
   }
 
-  // 静的ファイル配信
+  // ===== 静的ファイル配信 =====
   let filePath = path.join(__dirname, 'public', url.pathname === '/' ? 'index.html' : url.pathname);
   fs.readFile(filePath, (err, data) => {
     if (err) {
