@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APPAREL SALES DASHBOARD</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0e0e0e;
+    --surface: #181818;
+    --border: #2a2a2a;
+    --accent: #c8f542;
+    --accent2: #ff6b35;
+    --text: #f0f0f0;
+    --muted: #666;
+    --tshirt: #c8f542;
+    --pants: #ff6b35;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 20px;
+  }
+
+  .brand {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .brand span { color: var(--accent); }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .status-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* Token Input */
+  .token-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .token-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+  }
+
+  .token-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .token-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 10px 12px;
+    border-radius: 2px;
+    outline: none;
+  }
+
+  .token-input:focus { border-color: var(--accent); }
+
+  .btn {
+    background: var(--accent);
+    color: #0e0e0e;
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 10px 18px;
+    border-radius: 2px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+  }
+
+  .btn:hover { opacity: 0.85; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+
+  /* Error / Info */
+  .msg {
+    padding: 12px 16px;
+    border-radius: 2px;
+    font-size: 12px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .msg.error { background: #2a0f0f; border: 1px solid #ff4444; color: #ff8888; }
+  .msg.info  { background: #0f1a00; border: 1px solid var(--accent); color: var(--accent); }
+  .msg.show  { display: block; }
+
+  /* Stats grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+  }
+
+  .stat-card.full { grid-column: 1 / -1; }
+
+  .stat-eyebrow {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    line-height: 1;
+    color: var(--accent);
+  }
+
+  .stat-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Channel breakdown */
+  .section-title {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 12px;
+  }
+
+  .channel-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .channel-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 16px;
+  }
+
+  .channel-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .channel-name {
+    font-size: 12px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+  }
+
+  .channel-amount {
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  .bar-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.8s ease;
+  }
+
+  /* Product breakdown */
+  .product-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .product-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .product-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .product-card.tshirt::before { background: var(--tshirt); }
+  .product-card.pants::before  { background: var(--pants); }
+
+  .product-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .product-name {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+
+  .product-count {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 32px;
+    line-height: 1;
+  }
+
+  .product-card.tshirt .product-count { color: var(--tshirt); }
+  .product-card.pants  .product-count { color: var(--pants); }
+
+  .product-price {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .product-total {
+    font-size: 12px;
+    color: var(--text);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Orders list */
+  .orders-list {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .orders-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .order-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .order-item:last-child { border-bottom: none; }
+
+  .order-left { flex: 1; }
+
+  .order-id {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+
+  .order-items-text {
+    font-size: 12px;
+  }
+
+  .order-channel {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin: 0 8px;
+  }
+
+  .channel-store  { background: #1a1a2e; color: #8888ff; border: 1px solid #8888ff44; }
+  .channel-online { background: #0f2010; color: var(--accent); border: 1px solid #c8f54244; }
+
+  .order-amount {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  /* Loading */
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+    font-size: 12px;
+    display: none;
+  }
+
+  .loading.show { display: block; }
+
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  #dashboard { display: none; }
+  #dashboard.show { display: block; }
+
+  .period-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+  }
+
+  .tab {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab.active {
+    background: var(--accent);
+    color: #0e0e0e;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">APPAREL<span>.</span>DASH</div>
+  <div>
+    <span class="status-dot" id="statusDot"></span>
+    <span class="status-label" id="statusLabel">未接続</span>
+  </div>
+</header>
+
+<div class="token-section">
+  <div class="token-label">Square アクセストークン</div>
+  <div class="token-row">
+    <input class="token-input" type="password" id="tokenInput" placeholder="EAAAl08G..." />
+    <button class="btn" id="connectBtn" onclick="connect()">接続</button>
+  </div>
+</div>
+
+<div class="msg" id="msgBox"></div>
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  データ取得中...
+</div>
+
+<div id="dashboard">
+
+  <div class="period-tabs">
+    <button class="tab active" onclick="setPeriod('today', this)">今日</button>
+    <button class="tab" onclick="setPeriod('week', this)">今週</button>
+    <button class="tab" onclick="setPeriod('month', this)">今月</button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card full">
+      <div class="stat-eyebrow">総売上</div>
+      <div class="stat-value" id="totalRevenue">¥0</div>
+      <div class="stat-sub" id="totalOrders">0件の注文</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-eyebrow">店舗販売</div>
+      <div class="stat-value" id="storeRevenue" style="font-size:20px; color:#8888ff">¥0</div>
+      <div class="stat-sub" id="storeOrders">0件</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-eyebrow">オンライン</div>
+      <div class="stat-value" id="onlineRevenue" style="font-size:20px">¥0</div>
+      <div class="stat-sub" id="onlineOrders">0件</div>
+    </div>
+  </div>
+
+  <!-- チャネル比較 -->
+  <div class="section-title">販売チャネル比率</div>
+  <div class="channel-bars">
+    <div class="channel-row">
+      <div class="channel-header">
+        <span class="channel-name">🏪 業務提携店舗</span>
+        <span class="channel-amount" id="storePercent" style="color:#8888ff">0%</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" id="storeBar" style="width:0%; background:#8888ff;"></div>
+      </div>
+    </div>
+    <div class="channel-row">
+      <div class="channel-header">
+        <span class="channel-name">🌐 Squareオンライン</span>
+        <span class="channel-amount" id="onlinePercent">0%</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" id="onlineBar" style="width:0%; background:var(--accent);"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 商品別 -->
+  <div class="section-title">商品カテゴリ別売上</div>
+  <div class="product-cards">
+    <div class="product-card tshirt">
+      <div class="product-icon">👕</div>
+      <div class="product-name">シャツ類</div>
+      <div class="product-count" id="tshirtCount">0</div>
+      <div class="product-price">@¥4,500</div>
+      <div class="product-total" id="tshirtTotal">計 ¥0</div>
+    </div>
+    <div class="product-card pants">
+      <div class="product-icon">🩳</div>
+      <div class="product-name">パンツ類</div>
+      <div class="product-count" id="pantsCount">0</div>
+      <div class="product-price">@¥10,000</div>
+      <div class="product-total" id="pantsTotal">計 ¥0</div>
+    </div>
+  </div>
+
+  <!-- 最近の注文 -->
+  <div class="section-title">最近の注文</div>
+  <div class="orders-list">
+    <div class="orders-header">
+      <span class="section-title" style="margin:0">注文履歴</span>
+      <button class="btn btn-outline" style="font-size:10px; padding:4px 10px;" onclick="connect()">更新</button>
+    </div>
+    <div id="ordersList"></div>
+  </div>
+
+</div>
+
+<script>
+  let accessToken = '';
+  let currentPeriod = 'today';
+
+  // 価格で商品分類
+  const TSHIRT_PRICE = 4500;
+  const PANTS_PRICE = 10000;
+  const PRICE_TOLERANCE = 500; // 誤差許容
+
+  function isShirt(amount) {
+    return Math.abs(amount - TSHIRT_PRICE) <= PRICE_TOLERANCE;
+  }
+  function isPants(amount) {
+    return Math.abs(amount - PANTS_PRICE) <= PRICE_TOLERANCE;
+  }
+
+  function getDateRange(period) {
+    const now = new Date();
+    let start;
+    if (period === 'today') {
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    } else if (period === 'week') {
+      const day = now.getDay();
+      start = new Date(now);
+      start.setDate(now.getDate() - day);
+      start.setHours(0,0,0,0);
+    } else {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
+    return {
+      begin: start.toISOString(),
+      end: now.toISOString()
+    };
+  }
+
+  function setPeriod(period, btn) {
+    currentPeriod = period;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    if (accessToken) fetchData();
+  }
+
+  function showMsg(text, type) {
+    const box = document.getElementById('msgBox');
+    box.textContent = text;
+    box.className = `msg ${type} show`;
+  }
+
+  function hideMsg() {
+    document.getElementById('msgBox').className = 'msg';
+  }
+
+  async function connect() {
+    const input = document.getElementById('tokenInput').value.trim();
+    if (!input) {
+      showMsg('アクセストークンを入力してください', 'error');
+      return;
+    }
+    accessToken = input;
+    await fetchData();
+  }
+
+  async function fetchData() {
+    hideMsg();
+    document.getElementById('loading').classList.add('show');
+    document.getElementById('dashboard').classList.remove('show');
+
+    try {
+      const range = getDateRange(currentPeriod);
+
+      // Square Payments API
+      const url = `https://attractive-magic-production.up.railway.app/api/payments?begin_time=${range.begin}&end_time=${range.end}&limit=100`;
+      const resp = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Square-Version': '2024-01-18',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json();
+        throw new Error(err.errors?.[0]?.detail || 'APIエラー');
+      }
+
+      const data = await resp.json();
+      const payments = data.payments || [];
+
+      processPayments(payments);
+
+      // 接続成功
+      document.getElementById('statusDot').style.background = 'var(--accent)';
+      document.getElementById('statusLabel').textContent = '接続済み';
+      document.getElementById('loading').classList.remove('show');
+      document.getElementById('dashboard').classList.add('show');
+
+    } catch (e) {
+      document.getElementById('loading').classList.remove('show');
+      showMsg(`エラー: ${e.message}`, 'error');
+      document.getElementById('statusDot').style.background = '#ff4444';
+      document.getElementById('statusLabel').textContent = 'エラー';
+    }
+  }
+
+  function processPayments(payments) {
+    let totalRevenue = 0;
+    let storeRevenue = 0;
+    let onlineRevenue = 0;
+    let storeCount = 0;
+    let onlineCount = 0;
+    let tshirtCount = 0;
+    let pantsCount = 0;
+
+    const orders = [];
+
+    payments.forEach(p => {
+      if (p.status !== 'COMPLETED') return;
+      const amount = (p.amount_money?.amount || 0) / 100; // cents to yen (Square uses minor units)
+
+      totalRevenue += amount;
+
+      // チャネル判定
+      const isOnline = p.source_type === 'EXTERNAL' || p.order_id?.startsWith('online') || !p.device_id;
+      // より正確な判定: location_typeやsource_typeで判断
+      const sourceType = p.source_type || '';
+      const isOnlinePayment = sourceType === 'CARD_ON_FILE' || sourceType === 'BANK_ACCOUNT' || p.note?.includes('online');
+
+      if (isOnlinePayment) {
+        onlineRevenue += amount;
+        onlineCount++;
+      } else {
+        storeRevenue += amount;
+        storeCount++;
+      }
+
+      // 商品分類（金額ベース）
+      const itemCount = Math.round(amount / TSHIRT_PRICE);
+      if (isShirt(amount) || (amount % TSHIRT_PRICE < PRICE_TOLERANCE)) {
+        tshirtCount += Math.max(1, Math.round(amount / TSHIRT_PRICE));
+      } else if (isPants(amount) || (amount % PANTS_PRICE < PRICE_TOLERANCE)) {
+        pantsCount += Math.max(1, Math.round(amount / PANTS_PRICE));
+      }
+
+      orders.push({
+        id: p.id?.slice(-8) || '--------',
+        amount,
+        isOnline: isOnlinePayment,
+        createdAt: new Date(p.created_at || Date.now()),
+        note: p.note || ''
+      });
+    });
+
+    // UI更新
+    const fmt = n => `¥${Math.round(n).toLocaleString()}`;
+
+    document.getElementById('totalRevenue').textContent = fmt(totalRevenue);
+    document.getElementById('totalOrders').textContent = `${payments.filter(p=>p.status==='COMPLETED').length}件の注文`;
+    document.getElementById('storeRevenue').textContent = fmt(storeRevenue);
+    document.getElementById('storeOrders').textContent = `${storeCount}件`;
+    document.getElementById('onlineRevenue').textContent = fmt(onlineRevenue);
+    document.getElementById('onlineOrders').textContent = `${onlineCount}件`;
+
+    // チャネルバー
+    const total = storeRevenue + onlineRevenue || 1;
+    const storePct = Math.round(storeRevenue / total * 100);
+    const onlinePct = 100 - storePct;
+    document.getElementById('storeBar').style.width = storePct + '%';
+    document.getElementById('onlineBar').style.width = onlinePct + '%';
+    document.getElementById('storePercent').textContent = storePct + '%';
+    document.getElementById('onlinePercent').textContent = onlinePct + '%';
+
+    // 商品カード
+    document.getElementById('tshirtCount').textContent = tshirtCount;
+    document.getElementById('tshirtTotal').textContent = `計 ${fmt(tshirtCount * TSHIRT_PRICE)}`;
+    document.getElementById('pantsCount').textContent = pantsCount;
+    document.getElementById('pantsTotal').textContent = `計 ${fmt(pantsCount * PANTS_PRICE)}`;
+
+    // 注文リスト
+    const listEl = document.getElementById('ordersList');
+    if (orders.length === 0) {
+      listEl.innerHTML = '<div class="empty">この期間の注文はありません</div>';
+    } else {
+      listEl.innerHTML = orders.slice(0, 20).map(o => `
+        <div class="order-item">
+          <div class="order-left">
+            <div class="order-id">#${o.id}</div>
+            <div class="order-items-text">${o.note || '注文'}</div>
+          </div>
+          <span class="order-channel ${o.isOnline ? 'channel-online' : 'channel-store'}">
+            ${o.isOnline ? 'オンライン' : '店舗'}
+          </span>
+          <div class="order-amount">${fmt(o.amount)}</div>
+        </div>
+      `).join('');
+    }
+  }
+
+  // 初期トークンセット（テスト用にサンドボックストークンを入力しておく）
+  window.onload = () => {
+    document.getElementById('tokenInput').value = '';
+  };
+</script>
+</body>
+</html>
