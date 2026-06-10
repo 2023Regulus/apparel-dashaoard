@@ -1,3 +1,5 @@
+const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const https = require('https');
 const http = require('http');
 const fs = require('fs');
@@ -69,6 +71,13 @@ function handleWebhookEvent(event) {
   switch (event.type) {
     case 'payment.completed':
       console.log('💳 支払い完了:', event.data);
+      supabase.from('sales').insert({
+  amount: event.data.object?.amount_money?.amount || 0,
+  item_name: event.data.object?.line_items?.[0]?.name || '',
+  payment_type: event.data.object?.source_type || '',
+  order_id: event.data.object?.order_id || ''
+});
+
       break;
     case 'order.created':
       console.log('🛒 注文作成:', event.data);
