@@ -1,12 +1,15 @@
 const https = require('https');
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
 const PORT = process.env.PORT || 3000;
 
-function squareRequest(path, token) {
+function squareRequest(reqPath, token) {
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'connect.squareup.com',
-      path: path,
+      path: reqPath,
       method: 'GET',
       headers: {
         'Authorization': 'Bearer ' + token,
@@ -27,10 +30,9 @@ function squareRequest(path, token) {
   });
 }
 
-require('http').createServer(async (req, res) => {
+http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Content-Type', 'application/json');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(200);
@@ -41,19 +43,18 @@ require('http').createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   const token = req.headers['authorization']?.replace('Bearer ', '') || '';
 
-  if (!token) {
-    res.writeHead(401);
-    res.end(JSON.stringify({ error: 'No token' }));
-    return;
-  }
-
   if (url.pathname === '/api/payments') {
+    if (!token) {
+      res.writeHead(401);
+      res.end(JSON.stringify({ error: 'No token' }));
+      return;
+    }
     const begin = url.searchParams.get('begin_time') || '';
     const end = url.searchParams.get('end_time') || '';
-    const path = `/v2/payments?begin_time=${encodeURIComponent(begin)}&end_time=${encodeURIComponent(end)}&limit=100`;
+    const apiPath = `/v2/payments?begin_time=${encodeURIComponent(begin)}&end_time=${encodeURIComponent(end)}&limit=100`;
     try {
-      const data = await squareRequest(path, token);
-      res.writeHead(200);
+      const data = await squareRequest(apiPath, token);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(data));
     } catch(e) {
       res.writeHead(500);
@@ -62,8 +63,19 @@ require('http').createServer(async (req, res) => {
     return;
   }
 
-  res.writeHead(404);
-  res.end(JSON.stringify({ error: 'Not found' }));
+  // 静的ファイル配信
+  let filePath = path.join(__dirname, 'public', url.pathname === '/' ? 'index.html' : url.pathname);
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      res.writeHead(404);
+      res.end('Not found');
+      return;
+    }
+    const ext = path.extname(filePath);
+    const mime = ext === '.html' ? 'text/html' : ext === '.js' ? 'application/javascript' : 'text/plain';
+    res.writeHead(200, { 'Content-Type': mime });
+    res.end(data);
+  });
 
 }).listen(PORT, () => {
   console.log('Server running on port ' + PORT);
