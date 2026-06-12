@@ -69,7 +69,8 @@ const server = http.createServer((req, res) => {
 
 function handleWebhookEvent(event) {
   switch (event.type) {
-    case 'payment.completed':
+    case 'payment.created':
+    case 'payment.updated':
       console.log('💳 支払い完了:', event.data);
       supabase.from('sales').insert({
   amount: event.data.object?.amount_money?.amount || 0,
