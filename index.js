@@ -77,6 +77,8 @@ function handleWebhookEvent(event) {
   payment_type: event.data.object?.source_type || '',
   order_id: event.data.object?.order_id || ''
 });
+   sendLineNotify('💰 売上発生: ' + (event.data.object?.amount_money?.amount || 0) + '円');
+
 
       break;
     case 'order.created':
@@ -89,7 +91,31 @@ function handleWebhookEvent(event) {
       console.log('📌 その他イベント:', event.type);
   }
 }
+function sendLineNotify(message) {
+  const data = JSON.stringify({
+    to: process.env.LINE_USER_ID,
+    messages: [{ type: 'text', text: message }]
+  });
+
+  const options = {
+    hostname: 'api.line.me',
+    path: '/v2/bot/message/push',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + process.env.LINE_TOKEN
+    }
+  };
+
+  const req = https.request(options, (res) => {
+    res.on('data', () => {});
+  });
+  req.write(data);
+  req.end();
+}
+
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
